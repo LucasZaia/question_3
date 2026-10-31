@@ -1,0 +1,18 @@
+[
+  {
+    "query": "Como consultar o uso de memória no Linux?",
+    "relevant_sources": ["linux.md"]
+  },
+  {
+    "query": "Como criar uma função em Python?",
+    "relevant_sources": ["python.md"]
+  },
+  {
+    "query": "O que é um container?",
+    "relevant_sources": ["docker.md"]
+  },
+  {
+    "query": "Como verificar o espaço em disco?",
+    "relevant_sources": ["linux.md"]
+  }
+]

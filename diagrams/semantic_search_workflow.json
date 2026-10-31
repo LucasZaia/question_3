@@ -1,0 +1,61 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "Fluxo da Busca Semântica",
+    "quality_profile": "showcase",
+    "output": "diagrams/semantic_search_workflow.html"
+  },
+  "lanes": [
+    { "id": "ingestion", "label": "Indexação" },
+    { "id": "search", "label": "Consulta" }
+  ],
+  "phases": [
+    { "id": "prepare", "label": "Preparar documentos", "fromCol": 0, "toCol": 2 },
+    { "id": "vectorize", "label": "Gerar e consultar vetores", "fromCol": 3, "toCol": 5, "variant": "emphasis" }
+  ],
+  "mainPath": ["html", "markdown", "chunks", "document_embeddings", "pinecone"],
+  "semanticChecks": {
+    "allowedRoots": ["html", "user_query"],
+    "allowedTerminals": ["pinecone", "results"],
+    "requiredPaths": [
+      { "from": "html", "to": "pinecone" },
+      { "from": "user_query", "to": "results" }
+    ]
+  },
+  "nodes": [
+    { "id": "html", "lane": "ingestion", "col": 0, "type": "external", "label": "Arquivos HTML", "sublabel": "docs_extractor" },
+    { "id": "markdown", "lane": "ingestion", "col": 1, "type": "backend", "label": "Markdown", "sublabel": "documentos normalizados" },
+    { "id": "chunks", "lane": "ingestion", "col": 2, "type": "backend", "label": "Chunking", "sublabel": "800 caracteres / overlap 120" },
+    { "id": "document_embeddings", "lane": "ingestion", "col": 3, "type": "cloud", "label": "Embeddings", "sublabel": "OpenAI text-embedding-3-small" },
+    { "id": "pinecone", "lane": "ingestion", "col": 4, "type": "database", "label": "Pinecone", "sublabel": "vetores + metadados" },
+    { "id": "user_query", "lane": "search", "col": 0, "type": "external", "label": "Consulta", "sublabel": "pergunta do usuário" },
+    { "id": "query_embedding", "lane": "search", "col": 2, "type": "cloud", "label": "Embedding da consulta", "sublabel": "mesmo modelo" },
+    { "id": "retrieve", "lane": "search", "col": 4, "type": "database", "label": "Busca vetorial", "sublabel": "chunks mais próximos" },
+    { "id": "rerank", "lane": "search", "col": 5, "type": "cloud", "label": "Reranking", "sublabel": "OpenAI / opcional" },
+    { "id": "results", "lane": "search", "col": 5, "type": "backend", "label": "Resultados", "sublabel": "rank + score + fonte" }
+  ],
+  "edges": [
+    { "id": "convert", "from": "html", "to": "markdown", "label": "converter" },
+    { "id": "split", "from": "markdown", "to": "chunks", "label": "dividir" },
+    { "id": "embed-documents", "from": "chunks", "to": "document_embeddings", "label": "gerar vetores" },
+    { "id": "store", "from": "document_embeddings", "to": "pinecone", "label": "indexar" },
+    { "id": "embed-query", "from": "user_query", "to": "query_embedding", "label": "gerar vetor" },
+    { "id": "retrieve-vectors", "from": "query_embedding", "to": "retrieve", "label": "consultar Pinecone", "role": "main" },
+    { "id": "retrieve-index", "from": "pinecone", "to": "retrieve", "label": "comparar vetores", "variant": "dashed", "role": "branch" },
+    { "id": "rerank-candidates", "from": "retrieve", "to": "rerank", "label": "candidatos", "role": "main" },
+    { "id": "return-results", "from": "rerank", "to": "results", "label": "ordenar", "role": "main" }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Indexação",
+      "items": ["Documentos são divididos em chunks", "Chunks e metadados são indexados no Pinecone"]
+    },
+    {
+      "dot": "violet",
+      "title": "Consulta",
+      "items": ["A consulta usa o mesmo modelo de embedding", "Reranking melhora a ordem dos candidatos"]
+    }
+  ]
+}
